@@ -58,6 +58,22 @@ def clean_data(data):
     data['shot_made_flag'].fillna(0.5, inplace=True)
     return data
 
+def scatter_plot(data, columns1, columns2, color):
+    alpha = 0.02
+    plt.figure(figsize=(10,10))
+    plt.subplot(121)
+    plt.scatter(data[columns1], data[columns2], color=color, alpha=alpha)
+    plt.title(str(columns1)+ " " + str(columns2))
+
+def scatter_plot_by_category(feat):
+    alpha=0.1
+    gs = raw.groupby(feat)
+    cs = cm.rainbow(np.linspace(0,1,len(gs)))
+    for g,c in zip(gs,cs):
+        plt.scatter(g[1].loc_x, g[1].loc_y, color=c, alpha=alpha)
+        
+        
+
 ####################Coding###############
 
 raw = pd.read_csv('data_kb.csv')
@@ -65,6 +81,22 @@ raw = pd.read_csv('data_kb.csv')
 data = clean_data(raw)
 
 nona = data[pd.notnull(data['shot_made_flag'])]
+
+
+#####################Data Shapping#######
+    
+    
+##### Loc_x and Loc_y shapping
+raw['dist'] = np.sqrt(raw['loc_x']**2 + raw['loc_y']**2)
+loc_x_zero = raw['loc_x'] == 0
+raw['angle'] = np.array([0]*len(raw))
+raw['angle'][~loc_x_zero] = np.arctan(raw['loc_y'][~loc_x_zero] / raw['loc_x'][~loc_x_zero])
+raw['angle'][loc_x_zero] = np.pi /2
+#print(raw['angle'])
+
+raw['reamaining_time'] = raw['minutes_remaining'] * 60 + raw['seconds_remaining']
+
+raw['season'] = raw['season'].apply(lambda x : int(x.split('-')[1]))
 
 
 
@@ -79,41 +111,35 @@ Y = data['shot_made_flag']
 
 X_test, X_train, Y_test, Y_train = train_test_split(X,Y, test_size = 0.2)
 
-reg = linear_model.LinearRegression()
-reg.fit(X_train, Y_train)
 
-y_pred = reg.predict(X_test)
-print(y_pred)
+    
+
 ######################Ramdon Forest ####################
 
 
 ####################Graphics############################
     
-shot_type = number_of_occurences_to_dict(data, 'combined_shot_type')    
+#shot_type = number_of_occurences_to_dict(data, 'combined_shot_type')    
 #bar_plot(shot_type)
 #print ("shot type " + str(shot_type))
 
-shot_zone = number_of_occurences_to_dict(data,'shot_zone_area')
+#shot_zone = number_of_occurences_to_dict(data,'shot_zone_area')
 #bar_plot(shot_zone)
 #print ("shot zone " + str(shot_zone))
 
-shot_zone_basic = number_of_occurences_to_dict(data, 'shot_zone_basic')
+#shot_zone_basic = number_of_occurences_to_dict(data, 'shot_zone_basic')
 #bar_plot(shot_zone_basic)
 #print ("shot_zone_basic " + str(shot_zone_basic))
 
 
-shot_made_flag = number_of_occurences_to_dict(data, 'shot_made_flag')
+#shot_made_flag = number_of_occurences_to_dict(data, 'shot_made_flag')
 #bar_plot(shot_made_flag)
 #print ("shot_made_flag " + str(shot_made_flag))
-
-def scatter_plot(data, columns1, columns2, color):
-    alpha = 0.02
-    plt.figure(figsize=(10,10))
-    plt.subplot(121)
-    plt.scatter(data[columns1], data[columns2], color=color, alpha=alpha)
-    plt.title(str(columns1)+ " " + str(columns2))
-
 
 #scatter_plot(nona, 'loc_x', 'loc_y', 'blue')
 #scatter_plot(nona, 'lon', 'lat', 'green')
 
+
+scatter_plot_by_category('shot_zone_area')
+scatter_plot_by_category('shot_zone_basic')
+scatter_plot_by_category('shot_zone_range')
